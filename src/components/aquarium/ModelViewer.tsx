@@ -38,9 +38,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "caudal",
     name: "Aleta Caudal Delta",
     subtitle: "Propulsión y atracción visual",
-    pos: [0.52, 0.02, -0.1],
-    cameraTarget: [0.45, 0.01, -0.05],
-    cameraPos: [0.95, 0.25, 0.45],
+    pos: [0.42, 0.01, 0.06],
+    cameraTarget: [0.38, 0.0, 0.0],
+    cameraPos: [0.65, 0.08, 1.3],
     description:
       "Aleta en abanico con un ángulo de apertura de hasta 70°. Compuesta por radios dérmicos flexibles cubiertos de células pigmentarias e iridóforos.",
     fact: "Genera el 85% de la fuerza propulsora en nado crucero.",
@@ -49,9 +49,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "dorsal",
     name: "Aleta Dorsal",
     subtitle: "Estabilidad y cortejo",
-    pos: [0.1, 0.12, -0.02],
-    cameraTarget: [0.1, 0.06, 0.0],
-    cameraPos: [0.35, 0.55, 0.55],
+    pos: [-0.15, 0.19, 0.04],
+    cameraTarget: [-0.15, 0.12, 0.0],
+    cameraPos: [-0.15, 0.35, 1.3],
     description:
       "Aleta eréctil que actúa como quilla estabilizadora. Durante el cortejo, el macho la despliega en toda su amplitud junto con el arco corporal sigmoideo.",
     fact: "Previene el cabeceo lateral durante giros veloces.",
@@ -60,9 +60,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "branquias",
     name: "Opérculo y Branquias",
     subtitle: "Respiración osmótica",
-    pos: [-0.22, 0.01, 0.08],
-    cameraTarget: [-0.22, 0.01, 0.05],
-    cameraPos: [-0.65, 0.15, 0.45],
+    pos: [-0.35, -0.02, 0.06],
+    cameraTarget: [-0.35, -0.01, 0.0],
+    cameraPos: [-0.55, 0.05, 1.2],
     description:
       "Placas protectoras que cubren arcos branquiales hipervascularizados, capaces de extraer oxígeno en aguas poco oxigenadas de arroyos tropicales.",
     fact: "El ritmo respiratorio normal es de 90 a 140 pulsos por minuto.",
@@ -71,9 +71,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "ojo",
     name: "Ojo y Línea Lateral",
     subtitle: "Percepción multisensorial",
-    pos: [-0.34, 0.03, 0.06],
-    cameraTarget: [-0.32, 0.02, 0.03],
-    cameraPos: [-0.75, 0.22, 0.25],
+    pos: [-0.52, -0.04, 0.07],
+    cameraTarget: [-0.50, -0.03, 0.0],
+    cameraPos: [-0.70, 0.05, 1.1],
     description:
       "Ojos con conos sensibles a longitudes de onda ultravioleta para identificar los patrones iridiscentes de sus congéneres, sumado a mecanorreceptores laterales.",
     fact: "Detecta fluctuaciones de corriente menores a 1 mm/s.",
@@ -82,9 +82,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "vientre",
     name: "Gonosoma y Zona Ventral",
     subtitle: "Dimorfismo sexual y reproducción",
-    pos: [-0.04, -0.08, 0.02],
-    cameraTarget: [-0.04, -0.06, 0.01],
-    cameraPos: [0.05, -0.35, 0.65],
+    pos: [-0.20, -0.17, 0.08],
+    cameraTarget: [-0.20, -0.15, 0.0],
+    cameraPos: [-0.15, -0.32, 1.3],
     description:
       "En machos, la aleta anal está modificada en un órgano copulador móvil llamado gonopodio, permitiendo la fecundación interna como especie vivípara.",
     fact: "Las hembras pueden almacenar esperma para múltiples camadas sin macho.",
@@ -215,7 +215,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
     const aspect = width / height;
     const initialDist = getResponsiveCameraDistance(aspect);
     const camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 50);
-    camera.position.set(0.02, 0.0, initialDist);
+    camera.position.set(0.0, 0.0, initialDist);
 
     // 3. Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -237,7 +237,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
     controls.maxDistance = Math.max(5.5, initialDist * 2.0);
     controls.maxPolarAngle = Math.PI / 1.7; // ~105° para no voltear el pez
     controls.minPolarAngle = Math.PI / 4.0; // ~45° vista cenital controlada
-    controls.target.set(0.02, 0, 0);
+    controls.target.set(0.0, 0.0, 0.0);
 
     // 5. Lights
     const ambientLight = new THREE.AmbientLight(0x0a2432, 2.2);
@@ -316,7 +316,10 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       (gltf) => {
         const mesh = gltf.scene.children[0] as THREE.Mesh;
         if (mesh) {
-          // Center geometry pivot point
+          // El modelo original fue exportado con los flancos en Y y la aleta dorsal en -Z (acostado de lado).
+          // rotateX(Math.PI / 2) coloca al pez 100% ERGUIDO:
+          // Aleta dorsal ARRIBA (+Y), vientre ABAJO (-Y), y flancos mirando hacia la cámara (+Z).
+          mesh.geometry.rotateX(Math.PI / 2);
           mesh.geometry.computeBoundingBox();
           mesh.geometry.center();
 
@@ -342,13 +345,13 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
               "#include <begin_vertex>",
               `
               #include <begin_vertex>
-              // Guppy Spine Swimming Undulation along X
-              float normX = clamp((position.x - (-0.5)) / (0.7 - (-0.5)), 0.0, 1.0);
+              // Ondulación anatómica lateral de natación a lo largo de X
+              float normX = clamp((position.x - (-0.55)) / (0.55 - (-0.55)), 0.0, 1.0);
               float wave = sin(uTime * uSwimSpeed - normX * 4.2);
               float sway = (0.008 + pow(normX, 1.9) * uSwimAmplitude) * wave;
               transformed.z += sway;
-              // Secondary gentle fin ripple
-              transformed.y += sin(uTime * (uSwimSpeed * 0.5) - normX * 2.8) * (normX * 0.015);
+              // Ondulación secundaria suave en aletas dorsal y anal
+              transformed.y += sin(uTime * (uSwimSpeed * 0.5) - normX * 2.8) * (normX * 0.012);
               `,
             );
           };
@@ -483,8 +486,8 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
         !threeState.targetCameraPos &&
         (!activeCameraView || activeCameraView === "360" || activeCameraView === "flank")
       ) {
-        threeState.targetCameraPos = new THREE.Vector3(0.02, 0.0, rDist);
-        threeState.targetControlsTarget = new THREE.Vector3(0.02, 0, 0);
+        threeState.targetCameraPos = new THREE.Vector3(0.0, 0.0, rDist);
+        threeState.targetControlsTarget = new THREE.Vector3(0.0, 0.0, 0.0);
       }
     };
 
@@ -510,31 +513,31 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       : 1.0;
     const rDist = getResponsiveCameraDistance(currentAspect);
 
-    let targetPos: [number, number, number] = [0.02, 0.0, rDist];
-    let controlsTarget: [number, number, number] = [0.02, 0, 0];
+    let targetPos: [number, number, number] = [0.0, 0.0, rDist];
+    let controlsTarget: [number, number, number] = [0.0, 0.0, 0.0];
 
     switch (viewId) {
       case "flank": // Perfil lateral puro
-        targetPos = [0.02, 0.0, rDist];
-        controlsTarget = [0.02, 0, 0];
+        targetPos = [0.0, 0.0, rDist];
+        controlsTarget = [0.0, 0.0, 0.0];
         break;
       case "head": // Primer plano cabeza
-        targetPos = [-0.46, 0.03, Math.max(1.1, rDist * 0.48)];
-        controlsTarget = [-0.28, 0.01, 0.02];
+        targetPos = [-0.60, 0.05, Math.max(1.2, rDist * 0.5)];
+        controlsTarget = [-0.45, -0.02, 0.0];
         break;
       case "tail": // Foco en aleta caudal delta
-        targetPos = [0.55, 0.04, Math.max(1.2, rDist * 0.52)];
-        controlsTarget = [0.38, 0.01, -0.04];
+        targetPos = [0.65, 0.08, Math.max(1.3, rDist * 0.55)];
+        controlsTarget = [0.40, 0.01, 0.0];
         break;
       case "top": // Vista cenital superior
-        targetPos = [0.02, rDist * 0.95, 0.05];
-        controlsTarget = [0.02, 0, 0];
+        targetPos = [0.0, rDist * 1.05, 0.05];
+        controlsTarget = [0.0, 0.0, 0.0];
         break;
       case "360":
       default:
-        // Posición normal: pez horizontal, aleta dorsal arriba, erguido y centrado
-        targetPos = [0.02, 0.0, rDist];
-        controlsTarget = [0.02, 0, 0];
+        // Posición normal: pez 100% erguido, aleta dorsal arriba, vientre abajo, natación horizontal
+        targetPos = [0.0, 0.0, rDist];
+        controlsTarget = [0.0, 0.0, 0.0];
         break;
     }
 
