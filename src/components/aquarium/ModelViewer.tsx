@@ -121,6 +121,16 @@ interface ModelViewerProps {
   onSelectVariety?: ((variety: Variety) => void) | undefined;
 }
 
+// Calculate optimal camera distance based on viewport aspect ratio
+// Guppy length is ~1.17 units along X. In portrait mode (aspect < 1), we zoom out so head and tail never clip.
+function getResponsiveCameraDistance(aspect: number): number {
+  if (aspect <= 0.55) return 3.4;
+  if (aspect <= 0.75) return 2.85;
+  if (aspect <= 0.95) return 2.45;
+  if (aspect <= 1.2) return 2.1;
+  return 1.85;
+}
+
 export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: ModelViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -201,9 +211,11 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
     // 1. Scene
     const scene = new THREE.Scene();
 
-    // 2. Camera
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 50);
-    camera.position.set(0.9, 0.45, 1.25);
+    // 2. Camera - Posición normal erguida a nivel de ojos
+    const aspect = width / height;
+    const initialDist = getResponsiveCameraDistance(aspect);
+    const camera = new THREE.PerspectiveCamera(36, aspect, 0.1, 50);
+    camera.position.set(0.02, 0.0, initialDist);
 
     // 3. Renderer
     const renderer = new THREE.WebGLRenderer({
@@ -221,11 +233,11 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
-    controls.minDistance = 0.7;
-    controls.maxDistance = 3.6;
-    controls.maxPolarAngle = Math.PI / 1.75;
-    controls.minPolarAngle = Math.PI / 4.5;
-    controls.target.set(0.08, 0, 0);
+    controls.minDistance = 0.8;
+    controls.maxDistance = Math.max(5.5, initialDist * 2.0);
+    controls.maxPolarAngle = Math.PI / 1.7; // ~105° para no voltear el pez
+    controls.minPolarAngle = Math.PI / 4.0; // ~45° vista cenital controlada
+    controls.target.set(0.02, 0, 0);
 
     // 5. Lights
     const ambientLight = new THREE.AmbientLight(0x0a2432, 2.2);
@@ -383,7 +395,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       // Gentle floating buoyancy motion
       if (threeState.fishMesh) {
         threeState.fishMesh.position.y = Math.sin(time * 0.0018) * 0.025;
-        threeState.fishMesh.rotation.z = Math.cos(time * 0.0012) * 0.02;
+        threeState.fishMesh.rotation.z = Math.cos(time * 0.0012) * 0.012;
       }
 
       // Drift floating particles
@@ -452,14 +464,28 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
 
     threeState.animFrameId = requestAnimationFrame(animate);
 
-    // 10. Resize handler
+    // 10. Resize handler con recalibración responsiva
     const handleResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
       const h = containerRef.current.clientHeight;
-      camera.aspect = w / h;
+      if (w === 0 || h === 0) return;
+      const aspect = w / h;
+      camera.aspect = aspect;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
+
+      const rDist = getResponsiveCameraDistance(aspect);
+      controls.maxDistance = Math.max(5.5, rDist * 2.0);
+
+      // Si está en la vista normal/lateral, ajustar distancia para evitar cortes
+      if (
+        !threeState.targetCameraPos &&
+        (!activeCameraView || activeCameraView === "360" || activeCameraView === "flank")
+      ) {
+        threeState.targetCameraPos = new THREE.Vector3(0.02, 0.0, rDist);
+        threeState.targetControlsTarget = new THREE.Vector3(0.02, 0, 0);
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -470,7 +496,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       controls.dispose();
       renderer.dispose();
     };
-  }, []);
+  }, [activeCameraView]);
 
   // Preset Camera Views
   const setCameraView = useCallback((viewId: string) => {
@@ -479,30 +505,36 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
     setActiveCameraView(viewId);
     setActiveHotspot(null);
 
-    let targetPos: [number, number, number] = [0.9, 0.45, 1.25];
-    let controlsTarget: [number, number, number] = [0.08, 0, 0];
+    const currentAspect = containerRef.current
+      ? containerRef.current.clientWidth / (containerRef.current.clientHeight || 1)
+      : 1.0;
+    const rDist = getResponsiveCameraDistance(currentAspect);
+
+    let targetPos: [number, number, number] = [0.02, 0.0, rDist];
+    let controlsTarget: [number, number, number] = [0.02, 0, 0];
 
     switch (viewId) {
-      case "flank": // Lateral profile
-        targetPos = [0.0, 0.0, 1.8];
-        controlsTarget = [0.05, 0, 0];
+      case "flank": // Perfil lateral puro
+        targetPos = [0.02, 0.0, rDist];
+        controlsTarget = [0.02, 0, 0];
         break;
-      case "head": // Close-up head
-        targetPos = [-0.65, 0.15, 0.45];
-        controlsTarget = [-0.28, 0.02, 0.04];
+      case "head": // Primer plano cabeza
+        targetPos = [-0.46, 0.03, Math.max(1.1, rDist * 0.48)];
+        controlsTarget = [-0.28, 0.01, 0.02];
         break;
-      case "tail": // Focus on delta tail
-        targetPos = [0.95, 0.25, 0.55];
-        controlsTarget = [0.45, 0.01, -0.05];
+      case "tail": // Foco en aleta caudal delta
+        targetPos = [0.55, 0.04, Math.max(1.2, rDist * 0.52)];
+        controlsTarget = [0.38, 0.01, -0.04];
         break;
-      case "top": // Top-down aquarium view
-        targetPos = [0.1, 1.8, 0.1];
-        controlsTarget = [0.05, 0, 0];
+      case "top": // Vista cenital superior
+        targetPos = [0.02, rDist * 0.95, 0.05];
+        controlsTarget = [0.02, 0, 0];
         break;
       case "360":
       default:
-        targetPos = [0.9, 0.45, 1.25];
-        controlsTarget = [0.08, 0, 0];
+        // Posición normal: pez horizontal, aleta dorsal arriba, erguido y centrado
+        targetPos = [0.02, 0.0, rDist];
+        controlsTarget = [0.02, 0, 0];
         break;
     }
 
@@ -569,24 +601,24 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       />
 
       {/* Top Header HUD */}
-      <div className="pointer-events-none absolute inset-x-4 top-4 z-20 flex items-center justify-between gap-2">
-        <div className="glass pointer-events-auto flex items-center gap-2.5 rounded-full px-3.5 py-1.5 shadow-lg backdrop-blur-md">
-          <span className="relative flex h-2.5 w-2.5">
+      <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex items-center justify-between gap-2 sm:inset-x-4 sm:top-4">
+        <div className="glass pointer-events-auto flex items-center gap-2 rounded-full px-3 py-1 sm:gap-2.5 sm:px-3.5 sm:py-1.5 shadow-lg backdrop-blur-md">
+          <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-live opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-live" />
+            <span className="relative inline-flex h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full bg-live" />
           </span>
-          <span className="font-display text-sm tracking-wide text-foreground">
+          <span className="font-display text-xs sm:text-sm tracking-wide text-foreground">
             Poecilia reticulata
           </span>
-          <span className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-            {fps} FPS · 3D
+          <span className="rounded bg-muted/60 px-1.5 py-0.5 font-mono text-[9px] sm:text-[10px] text-muted-foreground">
+            {fps} FPS
           </span>
         </div>
 
         {/* View presets */}
-        <div className="glass pointer-events-auto hidden items-center gap-1 rounded-full p-1 sm:flex shadow-lg backdrop-blur-md">
+        <div className="glass pointer-events-auto hidden items-center gap-1 rounded-full p-1 md:flex shadow-lg backdrop-blur-md">
           {[
-            { id: "360", label: "360°", icon: Compass },
+            { id: "360", label: "Normal", icon: Compass },
             { id: "flank", label: "Lateral" },
             { id: "head", label: "Cabeza" },
             { id: "tail", label: "Cola Delta" },
@@ -595,7 +627,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
             <button
               key={v.id}
               onClick={() => setCameraView(v.id)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
                 activeCameraView === v.id
                   ? "bg-live text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -613,7 +645,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
             size="icon"
             className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
             onClick={resetView}
-            title="Restablecer vista"
+            title="Restablecer posición normal"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
@@ -697,10 +729,10 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       )}
 
       {/* Bottom Floating Control Bar */}
-      <div className="pointer-events-none absolute inset-x-4 bottom-4 z-20 flex flex-wrap items-center justify-between gap-2">
-        {/* Variety color palette pills right in 3D */}
-        <div className="glass pointer-events-auto flex items-center gap-1.5 overflow-x-auto rounded-full px-2.5 py-1.5 shadow-lg backdrop-blur-md">
-          <span className="mr-1 text-[11px] text-muted-foreground hidden lg:inline">Tinte:</span>
+      <div className="pointer-events-none absolute inset-x-3 bottom-3 z-20 flex items-center justify-between gap-2 sm:inset-x-4 sm:bottom-4">
+        {/* Variety color palette pills */}
+        <div className="glass pointer-events-auto flex items-center gap-1 sm:gap-1.5 overflow-x-auto rounded-full px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-lg backdrop-blur-md">
+          <span className="mr-0.5 text-[10px] text-muted-foreground hidden lg:inline">Tinte:</span>
           {varieties.slice(0, 6).map((v) => (
             <button
               key={v.id}
@@ -709,7 +741,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
                 onSelectVariety?.(v);
               }}
               title={`Variedad ${v.name}`}
-              className={`relative h-6 w-6 rounded-full transition-all hover:scale-115 ${
+              className={`relative h-5 w-5 sm:h-6 sm:w-6 rounded-full transition-all hover:scale-115 ${
                 activeVarietyId === v.id
                   ? "ring-2 ring-white scale-110 shadow-md"
                   : "opacity-75 hover:opacity-100"
@@ -725,9 +757,10 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
             variant="ghost"
             size="sm"
             onClick={() => setIsSwimming(!isSwimming)}
-            className={`h-7 rounded-full px-2.5 text-xs font-medium gap-1.5 ${
+            className={`h-7 rounded-full px-2 sm:px-2.5 text-xs font-medium gap-1.5 ${
               isSwimming ? "text-live" : "text-muted-foreground"
             }`}
+            title={isSwimming ? "Pausar nado" : "Activar nado"}
           >
             {isSwimming ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
             <span className="hidden sm:inline">{isSwimming ? "Nado activo" : "Pausado"}</span>
@@ -737,9 +770,10 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
             variant="ghost"
             size="sm"
             onClick={() => setShowHotspots(!showHotspots)}
-            className={`h-7 rounded-full px-2.5 text-xs font-medium gap-1.5 ${
+            className={`h-7 rounded-full px-2 sm:px-2.5 text-xs font-medium gap-1.5 ${
               showHotspots ? "text-live" : "text-muted-foreground"
             }`}
+            title="Mostrar/ocultar puntos anatómicos"
           >
             {showHotspots ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
             <span className="hidden sm:inline">Puntos</span>
@@ -749,7 +783,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
             variant="ghost"
             size="sm"
             onClick={() => setIsWireframe(!isWireframe)}
-            className={`h-7 rounded-full px-2.5 text-xs font-medium gap-1.5 ${
+            className={`h-7 rounded-full px-2 sm:px-2.5 text-xs font-medium gap-1.5 ${
               isWireframe ? "text-live bg-live/15" : "text-muted-foreground"
             }`}
             title="Ver topología de malla 3D"

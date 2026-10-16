@@ -118,7 +118,7 @@ export function Hero({
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-          className="order-2 h-[min(60svh,480px)] min-h-[340px] lg:h-[82svh]"
+          className="order-2 h-[min(65svh,520px)] min-h-[360px] sm:h-[460px] lg:h-[82svh]"
         >
           <ModelViewer activeVarietyId={activeVariety?.id} onSelectVariety={onSelectVariety} />
         </motion.div>
