@@ -1,0 +1,16 @@
+{
+  "name": "Reticulata — Acuario Digital del Guppy",
+  "short_name": "Reticulata",
+  "description": "Experiencia inmersiva y catálogo digital del pez Guppy (Poecilia reticulata).",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#0ea5e9",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

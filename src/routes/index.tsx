@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type CSSProperties } from "react";
 import { varieties, type Variety } from "@/data/varieties";
-import { MODEL_URL, heroPhoto } from "@/data/content";
+import { heroPhoto } from "@/data/content";
 import { Nav } from "@/components/aquarium/Nav";
 import { Hero } from "@/components/aquarium/Hero";
 import { MeetGuppy } from "@/components/aquarium/MeetGuppy";
@@ -34,12 +34,8 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      // Warm the viewer and its CORS model/texture connection while parsing the head.
-      { rel: "preconnect", href: new URL(MODEL_URL).origin },
-      { rel: "dns-prefetch", href: new URL(MODEL_URL).origin },
-      { rel: "preconnect", href: "https://cdn.realitymax.com", crossOrigin: "anonymous" },
-      { rel: "dns-prefetch", href: "https://cdn.realitymax.com" },
-      // LCP: hero photo behind the 3D model — fetch it before anything else.
+      // Preload 3D GLB model and hero image
+      { rel: "preload", as: "fetch", href: "/models/guppy.glb", crossOrigin: "anonymous" },
       { rel: "preload", as: "image", href: heroPhoto, fetchPriority: "high" },
     ],
   }),
@@ -56,7 +52,7 @@ function Index() {
       <Cursor />
       <Nav />
       <main>
-        <Hero />
+        <Hero activeVariety={variety} onSelectVariety={setVariety} />
         <MeetGuppy />
         <Varieties active={variety} onChange={setVariety} />
         <Habitat />

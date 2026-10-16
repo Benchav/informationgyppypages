@@ -4,7 +4,6 @@ import endler from "@/assets/g-endler.jpg";
 import tank from "@/assets/g-tank.jpg";
 import heroPhoto from "@/assets/guppy-hero.jpg";
 
-export const MODEL_URL = "https://realitymax.co/iWxS-J";
 export { heroPhoto };
 
 export const facts = [
