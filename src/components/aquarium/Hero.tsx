@@ -4,7 +4,7 @@ import { Bubbles, SwimmingFish } from "./Ambient";
 import { ModelViewer } from "./ModelViewer";
 import type { Variety } from "@/data/varieties";
 import { Volume2, VolumeX, Sparkles, Activity } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { aquariumAudio } from "@/lib/aquarium-audio";
 
 export function Hero({
@@ -20,6 +20,14 @@ export function Hero({
   const yModel = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const [muted, setMuted] = useState(true);
+  const [isLg, setIsLg] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsLg(window.innerWidth >= 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const toggleAudio = () => {
     const isPlaying = aquariumAudio.toggleMute();
@@ -34,7 +42,7 @@ export function Hero({
       <Bubbles count={22} />
 
       <div className="relative mx-auto grid min-h-[100svh] max-w-7xl items-center gap-8 px-5 pb-10 pt-24 lg:pb-16 lg:pt-28 lg:grid-cols-[1fr_1.2fr] lg:gap-8">
-        <motion.div style={{ y: yText, opacity: fade }} className="min-w-0 order-1">
+        <motion.div style={isLg ? { y: yText, opacity: fade } : {}} className="min-w-0 order-1">
           <div className="flex flex-wrap items-center gap-2 mb-6">
             <span className="eyebrow">Poecilia reticulata</span>
             <span className="h-1 w-1 rounded-full bg-live" />
@@ -114,11 +122,11 @@ export function Hero({
         </motion.div>
 
         <motion.div
-          style={{ y: yModel }}
+          style={isLg ? { y: yModel } : {}}
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-          className="order-2 h-[min(65svh,520px)] min-h-[360px] sm:h-[460px] lg:h-[82svh]"
+          className="order-2 h-[min(65svh,480px)] min-h-[350px] sm:h-[460px] lg:h-[82svh] mt-3 lg:mt-0"
         >
           <ModelViewer activeVarietyId={activeVariety?.id} onSelectVariety={onSelectVariety} />
         </motion.div>

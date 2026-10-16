@@ -38,9 +38,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "caudal",
     name: "Aleta Caudal Delta",
     subtitle: "Propulsión y atracción visual",
-    pos: [0.42, 0.01, 0.06],
-    cameraTarget: [0.38, 0.0, 0.0],
-    cameraPos: [0.65, 0.08, 1.3],
+    pos: [-0.42, 0.0, 0.08],
+    cameraTarget: [-0.38, 0.0, 0.0],
+    cameraPos: [-0.6, 0.05, 1.4],
     description:
       "Aleta en abanico con un ángulo de apertura de hasta 70°. Compuesta por radios dérmicos flexibles cubiertos de células pigmentarias e iridóforos.",
     fact: "Genera el 85% de la fuerza propulsora en nado crucero.",
@@ -49,9 +49,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "dorsal",
     name: "Aleta Dorsal",
     subtitle: "Estabilidad y cortejo",
-    pos: [-0.15, 0.19, 0.04],
-    cameraTarget: [-0.15, 0.12, 0.0],
-    cameraPos: [-0.15, 0.35, 1.3],
+    pos: [-0.14, 0.16, 0.03],
+    cameraTarget: [-0.14, 0.12, 0.0],
+    cameraPos: [-0.14, 0.35, 1.3],
     description:
       "Aleta eréctil que actúa como quilla estabilizadora. Durante el cortejo, el macho la despliega en toda su amplitud junto con el arco corporal sigmoideo.",
     fact: "Previene el cabeceo lateral durante giros veloces.",
@@ -60,9 +60,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "branquias",
     name: "Opérculo y Branquias",
     subtitle: "Respiración osmótica",
-    pos: [-0.35, -0.02, 0.06],
-    cameraTarget: [-0.35, -0.01, 0.0],
-    cameraPos: [-0.55, 0.05, 1.2],
+    pos: [0.24, 0.0, 0.1],
+    cameraTarget: [0.24, 0.0, 0.0],
+    cameraPos: [0.38, 0.05, 1.2],
     description:
       "Placas protectoras que cubren arcos branquiales hipervascularizados, capaces de extraer oxígeno en aguas poco oxigenadas de arroyos tropicales.",
     fact: "El ritmo respiratorio normal es de 90 a 140 pulsos por minuto.",
@@ -71,9 +71,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "ojo",
     name: "Ojo y Línea Lateral",
     subtitle: "Percepción multisensorial",
-    pos: [-0.52, -0.04, 0.07],
-    cameraTarget: [-0.50, -0.03, 0.0],
-    cameraPos: [-0.70, 0.05, 1.1],
+    pos: [0.44, 0.01, 0.07],
+    cameraTarget: [0.42, 0.01, 0.0],
+    cameraPos: [0.58, 0.05, 1.2],
     description:
       "Ojos con conos sensibles a longitudes de onda ultravioleta para identificar los patrones iridiscentes de sus congéneres, sumado a mecanorreceptores laterales.",
     fact: "Detecta fluctuaciones de corriente menores a 1 mm/s.",
@@ -82,9 +82,9 @@ const HOTSPOTS: Hotspot[] = [
     id: "vientre",
     name: "Gonosoma y Zona Ventral",
     subtitle: "Dimorfismo sexual y reproducción",
-    pos: [-0.20, -0.17, 0.08],
-    cameraTarget: [-0.20, -0.15, 0.0],
-    cameraPos: [-0.15, -0.32, 1.3],
+    pos: [0.1, -0.12, 0.04],
+    cameraTarget: [0.1, -0.1, 0.0],
+    cameraPos: [0.15, -0.28, 1.3],
     description:
       "En machos, la aleta anal está modificada en un órgano copulador móvil llamado gonopodio, permitiendo la fecundación interna como especie vivípara.",
     fact: "Las hembras pueden almacenar esperma para múltiples camadas sin macho.",
@@ -122,13 +122,11 @@ interface ModelViewerProps {
 }
 
 // Calculate optimal camera distance based on viewport aspect ratio
-// Guppy length is ~1.17 units along X. In portrait mode (aspect < 1), we zoom out so head and tail never clip.
+// Guppy length is ~1.17 units. Dynamic formula guarantees the full fish occupies ~65% of screen width on any device.
 function getResponsiveCameraDistance(aspect: number): number {
-  if (aspect <= 0.55) return 3.4;
-  if (aspect <= 0.75) return 2.85;
-  if (aspect <= 0.95) return 2.45;
-  if (aspect <= 1.2) return 2.1;
-  return 1.85;
+  if (aspect <= 0) return 3.5;
+  const calculated = 2.75 / aspect;
+  return Math.min(4.2, Math.max(1.95, calculated));
 }
 
 export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: ModelViewerProps) {
@@ -521,13 +519,13 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
         targetPos = [0.0, 0.0, rDist];
         controlsTarget = [0.0, 0.0, 0.0];
         break;
-      case "head": // Primer plano cabeza
-        targetPos = [-0.60, 0.05, Math.max(1.2, rDist * 0.5)];
-        controlsTarget = [-0.45, -0.02, 0.0];
+      case "head": // Primer plano cabeza (lado derecho +X)
+        targetPos = [0.45, 0.02, Math.max(1.2, rDist * 0.48)];
+        controlsTarget = [0.4, 0.0, 0.0];
         break;
-      case "tail": // Foco en aleta caudal delta
-        targetPos = [0.65, 0.08, Math.max(1.3, rDist * 0.55)];
-        controlsTarget = [0.40, 0.01, 0.0];
+      case "tail": // Foco en aleta caudal delta (lado izquierdo -X)
+        targetPos = [-0.45, 0.02, Math.max(1.3, rDist * 0.52)];
+        controlsTarget = [-0.38, 0.0, 0.0];
         break;
       case "top": // Vista cenital superior
         targetPos = [0.0, rDist * 1.05, 0.05];
