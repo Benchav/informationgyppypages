@@ -17,9 +17,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Reticulata — El mundo fascinante del Guppy" },
-      { name: "description", content: "Acuario digital inmersivo: modelo 3D, variedades, hábitat interactivo y guía de cuidados del pez Guppy." },
+      {
+        name: "description",
+        content:
+          "Acuario digital inmersivo: modelo 3D, variedades, hábitat interactivo y guía de cuidados del pez Guppy.",
+      },
       { property: "og:title", content: "Reticulata — El mundo fascinante del Guppy" },
-      { property: "og:description", content: "Explora el Guppy en 3D, sus variedades de color y cómo crear su hábitat perfecto." },
+      {
+        property: "og:description",
+        content:
+          "Explora el Guppy en 3D, sus variedades de color y cómo crear su hábitat perfecto.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:image", content: heroPhoto },
       { name: "twitter:image", content: heroPhoto },

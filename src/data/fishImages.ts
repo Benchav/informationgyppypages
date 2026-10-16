@@ -9,5 +9,15 @@ import fancy from "@/assets/v-fancy.webp";
 import endler from "@/assets/v-endler.webp";
 
 /** Transparent, photo-real cut-outs keyed by variety id. */
-export const fishImages: Record<string, string> = { blue, red, yellow, black, orange, mosaic, cobra, fancy, endler };
+export const fishImages: Record<string, string> = {
+  blue,
+  red,
+  yellow,
+  black,
+  orange,
+  mosaic,
+  cobra,
+  fancy,
+  endler,
+};
 export const swimmers = [blue, red, mosaic, yellow, fancy];

@@ -1,24 +1,29 @@
-# Pixel Perfect Prototype
+# Reticulata — Acuario digital del Guppy
 
-Implement exactly the screenshot and nothing else
+Experiencia web inmersiva dedicada al pez Guppy (_Poecilia reticulata_), con visualización interactiva 3D, catálogo de variedades, guía de parámetros y cuidados de acuario.
 
-This project was built with [Lovable](https://lovable.dev).
+## Tecnologías
 
-## Build with Lovable
+- **Framework**: [TanStack Start](https://tanstack.com/start) + [TanStack Router](https://tanstack.com/router)
+- **UI / Core**: React 19, TypeScript
+- **Estilos**: Tailwind CSS v4, Lucide Icons
+- **Animaciones**: Framer Motion
+- **Build Tool**: Vite
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/5cb46906-a58a-4e87-b7a8-486aa3827ceb).
+## Desarrollo local
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Requisitos: Node.js (>= 18) y npm / bun.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
 npm run dev
+
+# Compilar para producción
+npm run build
+
+# Previsualizar compilación de producción
+npm run preview
 ```

@@ -24,7 +24,18 @@ export function Cursor() {
 
   if (!enabled) return null;
   return (
-    <motion.div aria-hidden className="pointer-events-none fixed left-0 top-0 z-[100] rounded-full border border-live mix-blend-screen" style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%" }}
-      animate={{ width: hover ? 48 : 18, height: hover ? 48 : 18, backgroundColor: hover ? "color-mix(in oklab, var(--live) 18%, transparent)" : "transparent" }} transition={{ duration: 0.25 }} />
+    <motion.div
+      aria-hidden
+      className="pointer-events-none fixed left-0 top-0 z-[100] rounded-full border border-live mix-blend-screen"
+      style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%" }}
+      animate={{
+        width: hover ? 48 : 18,
+        height: hover ? 48 : 18,
+        backgroundColor: hover
+          ? "color-mix(in oklab, var(--live) 18%, transparent)"
+          : "transparent",
+      }}
+      transition={{ duration: 0.25 }}
+    />
   );
 }

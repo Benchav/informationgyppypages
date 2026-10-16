@@ -62,28 +62,57 @@
   --border: oklch(0.9 0.04 210 / 0.12);
   --input: oklch(0.9 0.04 210 / 0.16);
   --ring: var(--live);
-  --gradient-water: radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in oklab, var(--live) 22%, transparent), transparent 70%),
+  --gradient-water:
+    radial-gradient(
+      ellipse 80% 60% at 50% 0%,
+      color-mix(in oklab, var(--live) 22%, transparent),
+      transparent 70%
+    ),
     linear-gradient(180deg, var(--deep), var(--abyss) 70%);
-  --gradient-iris: linear-gradient(100deg, oklch(0.8 0.15 200), oklch(0.75 0.17 150), oklch(0.8 0.16 80), oklch(0.68 0.2 30), oklch(0.65 0.18 280));
+  --gradient-iris: linear-gradient(
+    100deg,
+    oklch(0.8 0.15 200),
+    oklch(0.75 0.17 150),
+    oklch(0.8 0.16 80),
+    oklch(0.68 0.2 30),
+    oklch(0.65 0.18 280)
+  );
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; scroll-padding-top: 100px; }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  ::selection { background: color-mix(in oklab, var(--live) 40%, transparent); }
+  ::selection {
+    background: color-mix(in oklab, var(--live) 40%, transparent);
+  }
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
   }
 }
 
-@utility bg-water { background: var(--gradient-water); }
+@utility bg-water {
+  background: var(--gradient-water);
+}
 @utility text-iris {
   background: var(--gradient-iris);
   background-size: 200% 100%;
@@ -106,63 +135,185 @@
 }
 @utility caustics {
   background-image:
-    radial-gradient(circle at 20% 30%, color-mix(in oklab, var(--live) 18%, transparent) 0 8%, transparent 20%),
-    radial-gradient(circle at 70% 60%, color-mix(in oklab, var(--glow) 12%, transparent) 0 6%, transparent 18%),
-    radial-gradient(circle at 45% 80%, color-mix(in oklab, var(--live) 10%, transparent) 0 7%, transparent 22%);
+    radial-gradient(
+      circle at 20% 30%,
+      color-mix(in oklab, var(--live) 18%, transparent) 0 8%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 70% 60%,
+      color-mix(in oklab, var(--glow) 12%, transparent) 0 6%,
+      transparent 18%
+    ),
+    radial-gradient(
+      circle at 45% 80%,
+      color-mix(in oklab, var(--live) 10%, transparent) 0 7%,
+      transparent 22%
+    );
   background-size: 140% 140%;
   animation: caustic 18s ease-in-out infinite alternate;
   mix-blend-mode: screen;
 }
 @utility light-rays {
-  background: repeating-linear-gradient(100deg, transparent 0 60px, color-mix(in oklab, var(--glow) 7%, transparent) 60px 90px, transparent 90px 170px);
+  background: repeating-linear-gradient(
+    100deg,
+    transparent 0 60px,
+    color-mix(in oklab, var(--glow) 7%, transparent) 60px 90px,
+    transparent 90px 170px
+  );
   mask-image: linear-gradient(180deg, black, transparent 75%);
   animation: rays 14s ease-in-out infinite alternate;
 }
 @utility btn-live {
-  display: inline-flex; align-items: center; gap: 0.6rem;
-  padding: 0.9rem 1.6rem; border-radius: 999px;
-  background: var(--live); color: var(--primary-foreground);
-  font-weight: 600; font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.6rem;
+  border-radius: 999px;
+  background: var(--live);
+  color: var(--primary-foreground);
+  font-weight: 600;
+  font-size: 0.9rem;
   box-shadow: 0 0 40px -8px var(--live);
-  transition: transform .3s, box-shadow .3s, background .6s;
-  &:hover { transform: translateY(-2px); box-shadow: 0 0 60px -4px var(--live); }
+  transition:
+    transform 0.3s,
+    box-shadow 0.3s,
+    background 0.6s;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 60px -4px var(--live);
+  }
 }
 @utility btn-ghost-water {
-  display: inline-flex; align-items: center; gap: 0.6rem;
-  padding: 0.9rem 1.6rem; border-radius: 999px;
-  border: 1px solid var(--color-border); color: var(--color-foreground);
-  font-size: 0.9rem; transition: border-color .3s, background .3s;
-  &:hover { border-color: var(--live); background: color-mix(in oklab, var(--live) 10%, transparent); }
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-foreground);
+  font-size: 0.9rem;
+  transition:
+    border-color 0.3s,
+    background 0.3s;
+  &:hover {
+    border-color: var(--live);
+    background: color-mix(in oklab, var(--live) 10%, transparent);
+  }
 }
 
-@keyframes iris { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
-@keyframes caustic { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
-@keyframes rays { from { transform: translateX(-4%) skewX(-4deg); opacity: .7; } to { transform: translateX(4%) skewX(4deg); opacity: 1; } }
+@keyframes iris {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+@keyframes caustic {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 100%;
+  }
+}
+@keyframes rays {
+  from {
+    transform: translateX(-4%) skewX(-4deg);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateX(4%) skewX(4deg);
+    opacity: 1;
+  }
+}
 @keyframes rise {
-  0% { transform: translate3d(0, 0, 0); opacity: 0; }
-  10% { opacity: .8; }
-  100% { transform: translate3d(var(--drift, 20px), -110vh, 0); opacity: 0; }
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate3d(var(--drift, 20px), -110vh, 0);
+    opacity: 0;
+  }
 }
 @keyframes swim {
-  0% { transform: translate3d(-15vw, 0, 0); opacity: 0; }
-  8% { opacity: var(--o, .6); }
-  25% { transform: translate3d(20vw, -3vh, 0); }
-  50% { transform: translate3d(50vw, 2vh, 0); }
-  75% { transform: translate3d(80vw, -2vh, 0); }
-  92% { opacity: var(--o, .6); }
-  100% { transform: translate3d(115vw, 1vh, 0); opacity: 0; }
+  0% {
+    transform: translate3d(-15vw, 0, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--o, 0.6);
+  }
+  25% {
+    transform: translate3d(20vw, -3vh, 0);
+  }
+  50% {
+    transform: translate3d(50vw, 2vh, 0);
+  }
+  75% {
+    transform: translate3d(80vw, -2vh, 0);
+  }
+  92% {
+    opacity: var(--o, 0.6);
+  }
+  100% {
+    transform: translate3d(115vw, 1vh, 0);
+    opacity: 0;
+  }
 }
-@keyframes tail { from { transform: skewY(-8deg) scaleX(.92); } to { transform: skewY(8deg) scaleX(1.04); } }
-@keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes tail {
+  from {
+    transform: skewY(-8deg) scaleX(0.92);
+  }
+  to {
+    transform: skewY(8deg) scaleX(1.04);
+  }
+}
+@keyframes sway {
+  from {
+    transform: rotate(-4deg);
+  }
+  to {
+    transform: rotate(4deg);
+  }
+}
 
 @layer base {
-  body { overflow-x: clip; }
-  h1, h2, h3, h4 { overflow-wrap: anywhere; letter-spacing: 0; }
-  main section > div { min-width: 0; }
-  a, button { -webkit-tap-highlight-color: transparent; }
-  a:focus-visible { outline: 2px solid var(--live); outline-offset: 4px; }
+  body {
+    overflow-x: clip;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    overflow-wrap: anywhere;
+    letter-spacing: 0;
+  }
+  main section > div {
+    min-width: 0;
+  }
+  a,
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  a:focus-visible {
+    outline: 2px solid var(--live);
+    outline-offset: 4px;
+  }
   @media (max-width: 639px) {
-    main section { scroll-margin-top: 16px; }
-    .btn-live, .btn-ghost-water { min-height: 48px; justify-content: center; padding-inline: 1rem; }
+    main section {
+      scroll-margin-top: 16px;
+    }
+    .btn-live,
+    .btn-ghost-water {
+      min-height: 48px;
+      justify-content: center;
+      padding-inline: 1rem;
+    }
   }
 }
