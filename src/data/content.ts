@@ -2,10 +2,10 @@ import red from "@/assets/g-red.jpg";
 import cobra from "@/assets/g-cobra.jpg";
 import endler from "@/assets/g-endler.jpg";
 import tank from "@/assets/g-tank.jpg";
-import heroAsset from "@/assets/guppy-hero.jpg.asset.json";
+import heroPhoto from "@/assets/guppy-hero.jpg";
 
 export const MODEL_URL = "https://realitymax.co/iWxS-J";
-export const heroPhoto = heroAsset.url;
+export { heroPhoto };
 
 export const facts = [
   { k: "Origen", v: "Caribe y norte de Sudamérica", n: "1866", unit: "descrito" },
