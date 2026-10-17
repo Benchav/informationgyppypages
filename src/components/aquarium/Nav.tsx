@@ -4,6 +4,8 @@ import { motion, useScroll, useSpring } from "framer-motion";
 import { useEffect, useState } from "react";
 import { aquariumAudio } from "@/lib/aquarium-audio";
 
+import { scrollToSurface } from "@/lib/aquarium-scroll";
+
 const links = [
   ["#inicio", "Inicio 3D"],
   ["#guppy", "Biología"],
@@ -19,7 +21,11 @@ export function Nav() {
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(() => aquariumAudio.getMuted());
+
+  useEffect(() => {
+    return aquariumAudio.subscribe((isMuted) => setMuted(isMuted));
+  }, []);
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 40);
@@ -29,8 +35,7 @@ export function Nav() {
   }, []);
 
   const toggleSound = () => {
-    const isPlaying = aquariumAudio.toggleMute();
-    setMuted(!isPlaying);
+    aquariumAudio.toggleMute();
   };
 
   return (
@@ -42,7 +47,16 @@ export function Nav() {
             : "bg-transparent"
         }`}
       >
-        <a href="#inicio" className="flex min-w-0 items-baseline gap-2 group">
+        <a
+          href="#inicio"
+          onClick={(e) => {
+            if (scrolled) {
+              e.preventDefault();
+              scrollToSurface();
+            }
+          }}
+          className="flex min-w-0 items-baseline gap-2 group"
+        >
           <span className="font-display text-2xl italic tracking-wide group-hover:text-live transition-colors">
             Reticulata
           </span>
@@ -54,6 +68,12 @@ export function Nav() {
             <a
               key={h}
               href={h}
+              onClick={(e) => {
+                if (h === "#inicio" && scrolled) {
+                  e.preventDefault();
+                  scrollToSurface();
+                }
+              }}
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {l}
@@ -77,6 +97,12 @@ export function Nav() {
 
           <a
             href="#inicio"
+            onClick={(e) => {
+              if (scrolled) {
+                e.preventDefault();
+                scrollToSurface();
+              }
+            }}
             className="glass flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium text-foreground hover:border-live transition-all"
           >
             <Box className="h-3.5 w-3.5 text-live" />

@@ -142,11 +142,42 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
   const [activeHotspot, setActiveHotspot] = useState<Hotspot | null>(null);
   const [isWireframe, setIsWireframe] = useState(false);
   const [activeCameraView, setActiveCameraView] = useState<string>("360");
-  const [screenCoords, setScreenCoords] = useState<
-    Record<string, { x: number; y: number; visible: boolean }>
-  >({});
   const [fps, setFps] = useState(60);
   const initialVarietyRef = useRef(activeVarietyId);
+
+  // Performance refs & visibility tracking
+  const isVisibleRef = useRef(true);
+  const showHotspotsRef = useRef(showHotspots);
+  const loadingRef = useRef(loading);
+  const pinRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const cachedDims = useRef({ width: 600, height: 450 });
+  const activeCameraViewRef = useRef(activeCameraView);
+
+  useEffect(() => {
+    showHotspotsRef.current = showHotspots;
+  }, [showHotspots]);
+
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
+  useEffect(() => {
+    activeCameraViewRef.current = activeCameraView;
+  }, [activeCameraView]);
+
+  // Pause render loop when scrolled out of view to save 100% GPU/CPU
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        isVisibleRef.current = entry?.isIntersecting ?? true;
+      },
+      { rootMargin: "250px" },
+    );
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Three.js internal references
   const threeRef = useRef<{
@@ -375,9 +406,16 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
     let lastTime = performance.now();
     let frameCount = 0;
     let fpsTimer = performance.now();
+    const tempVec = new THREE.Vector3();
+
+    // Cache initial container dimensions
+    cachedDims.current = { width, height };
 
     const animate = (time: number) => {
       threeState.animFrameId = requestAnimationFrame(animate);
+
+      // Save 100% of GPU and CPU calculations while scrolled off-screen
+      if (!isVisibleRef.current) return;
 
       const delta = (time - lastTime) * 0.001;
       lastTime = time;
@@ -442,24 +480,26 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       controls.update();
       renderer.render(scene, camera);
 
-      // Project hotspots to 2D canvas coordinates
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const coords: Record<string, { x: number; y: number; visible: boolean }> = {};
-        const tempVec = new THREE.Vector3();
+      // Project hotspots directly to DOM pin elements (zero reflows, zero React re-renders)
+      if (showHotspotsRef.current && !loadingRef.current) {
+        const { width: w, height: h } = cachedDims.current;
+        for (const hSpot of HOTSPOTS) {
+          const el = pinRefs.current[hSpot.id];
+          if (!el) continue;
 
-        for (const h of HOTSPOTS) {
-          tempVec.set(...h.pos);
+          tempVec.set(...hSpot.pos);
           tempVec.project(camera);
 
-          // Check if hotspot is facing the camera (Z depth)
           const visible = tempVec.z < 1.0;
-          const x = (tempVec.x * 0.5 + 0.5) * rect.width;
-          const y = (-(tempVec.y * 0.5) + 0.5) * rect.height;
-
-          coords[h.id] = { x, y, visible };
+          if (!visible) {
+            el.style.display = "none";
+          } else {
+            const x = (tempVec.x * 0.5 + 0.5) * w;
+            const y = (-(tempVec.y * 0.5) + 0.5) * h;
+            el.style.display = "block";
+            el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          }
         }
-        setScreenCoords(coords);
       }
     };
 
@@ -471,6 +511,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       const w = containerRef.current.clientWidth;
       const h = containerRef.current.clientHeight;
       if (w === 0 || h === 0) return;
+      cachedDims.current = { width: w, height: h };
       const aspect = w / h;
       camera.aspect = aspect;
       camera.updateProjectionMatrix();
@@ -480,9 +521,10 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       controls.maxDistance = Math.max(5.5, rDist * 2.0);
 
       // Si está en la vista normal/lateral, ajustar distancia para evitar cortes
+      const activeCam = activeCameraViewRef.current;
       if (
         !threeState.targetCameraPos &&
-        (!activeCameraView || activeCameraView === "360" || activeCameraView === "flank")
+        (!activeCam || activeCam === "360" || activeCam === "flank")
       ) {
         threeState.targetCameraPos = new THREE.Vector3(0.0, 0.0, rDist);
         threeState.targetControlsTarget = new THREE.Vector3(0.0, 0.0, 0.0);
@@ -497,7 +539,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
       controls.dispose();
       renderer.dispose();
     };
-  }, [activeCameraView]);
+  }, []);
 
   // Preset Camera Views
   const setCameraView = useCallback((viewId: string) => {
@@ -666,23 +708,23 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
         </div>
       </div>
 
-      {/* Interactive 3D Anatomy Pins */}
-      {showHotspots &&
-        !loading &&
-        HOTSPOTS.map((h) => {
-          const coord = screenCoords[h.id];
-          if (!coord || !coord.visible) return null;
+      {/* Interactive 3D Anatomy Pins (Direct GPU transform via refs for maximum performance) */}
+      <div
+        className={`pointer-events-none absolute inset-0 z-10 transition-opacity duration-300 ${
+          showHotspots && !loading ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {HOTSPOTS.map((h) => {
           const isSelected = activeHotspot?.id === h.id;
 
           return (
             <div
               key={h.id}
-              style={{
-                left: `${coord.x}px`,
-                top: `${coord.y}px`,
-                transform: "translate(-50%, -50%)",
+              ref={(el) => {
+                pinRefs.current[h.id] = el;
               }}
-              className="absolute z-10 transition-transform duration-100 hover:scale-125"
+              style={{ display: "none" }}
+              className="pointer-events-auto absolute left-0 top-0 will-change-transform"
             >
               <button
                 onClick={() => handleSelectHotspot(h)}
@@ -701,6 +743,7 @@ export function ModelViewer({ activeVarietyId = "blue", onSelectVariety }: Model
             </div>
           );
         })}
+      </div>
 
       {/* Hotspot detail popup card */}
       {activeHotspot && (

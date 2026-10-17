@@ -19,8 +19,12 @@ export function Hero({
   const yText = useTransform(scrollYProgress, [0, 1], [0, 160]);
   const yModel = useTransform(scrollYProgress, [0, 1], [0, -80]);
   const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(() => aquariumAudio.getMuted());
   const [isLg, setIsLg] = useState(false);
+
+  useEffect(() => {
+    return aquariumAudio.subscribe((isMuted) => setMuted(isMuted));
+  }, []);
 
   useEffect(() => {
     const check = () => setIsLg(window.innerWidth >= 1024);
@@ -30,8 +34,7 @@ export function Hero({
   }, []);
 
   const toggleAudio = () => {
-    const isPlaying = aquariumAudio.toggleMute();
-    setMuted(!isPlaying);
+    aquariumAudio.toggleMute();
   };
 
   return (

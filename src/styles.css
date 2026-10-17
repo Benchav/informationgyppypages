@@ -1,5 +1,4 @@
-@import "tailwindcss" source(none);
-@source "../src";
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -86,6 +85,14 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 100px;
+  }
+  html.is-ascending {
+    scroll-behavior: auto !important;
+  }
+  body.is-ascending,
+  body.is-ascending * {
+    pointer-events: none !important;
+    cursor: default !important;
   }
   body {
     background-color: var(--color-background);
